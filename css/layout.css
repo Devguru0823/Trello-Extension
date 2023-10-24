@@ -292,9 +292,23 @@ span.list-card-operation {
     top: 50%;
     transform: scale(0.8) translate(0px, -15px);
     padding: 2px;
+    visibility: visible !important;
 }
 
-a.list-card div.charcol-overlay {
+/* a.list-card div.charcol-overlay {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #777777;
+    opacity: 0.6;
+    z-index: 10;
+} */
+
+[data-testid='trello-card'] div.charcol-overlay {
     width: 100%;
     height: 100%;
     position: absolute;
@@ -307,7 +321,7 @@ a.list-card div.charcol-overlay {
     z-index: 10;
 }
 
-a.list-card div.outcome-text {    
+/* [data-testid='trello-card'] div.outcome-text {    
     position: absolute;
     right: 2px;
     color: white;
@@ -316,7 +330,7 @@ a.list-card div.outcome-text {
     max-width: calc(100% - 100px);
     text-overflow: ellipsis;
     white-space: nowrap;
-}
+} */
 
 .card-time-wrapper {
     display: inline-block;
@@ -365,6 +379,6 @@ a.list-card div.outcome-text {
     height: 30.6px;
 }
 
-.list-card.filter-star {
+.filter-star {
     display: none;
 }

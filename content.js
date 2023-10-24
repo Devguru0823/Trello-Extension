@@ -230,7 +230,12 @@ const addCompleteIcon = (target) => {
             );            
         });
     });
-    $completeIcon.insertAfter(target.find("span.js-open-quick-card-editor"));
+    // $completeIcon.insertAfter(target.find("[data-testid='trello-card']"));
+    setTimeout(() => {
+        if ($(target.closest("[data-testid='list-card']").find("div.charcol-overlay")).length > 0) {
+            $completeIcon.appendTo(target.closest("[data-testid='list-card']").find("div.charcol-overlay"));
+        }
+    }, 50);
 };
 
 const addArchiveIcon = (target) => {
@@ -249,7 +254,11 @@ const addArchiveIcon = (target) => {
             })
         );
     });
-    $archiveIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
+    setTimeout(() => {
+        if ($(target.closest("[data-testid='list-card']").find("div.charcol-overlay")).length > 0) {
+            $archiveIcon.appendTo(target.closest("[data-testid='list-card']").find("div.charcol-overlay"));
+        }
+    }, 50);
 };
 
 const addClockIcon = (target) => {
@@ -285,7 +294,12 @@ const addClockIcon = (target) => {
             }
         })
     });
-    $clockIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
+    // $clockIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
+    setTimeout(() => {
+        if ($(target.closest("[data-testid='list-card']").find("div.charcol-overlay")).length > 0) {
+            $clockIcon.appendTo(target.closest("[data-testid='list-card']").find("div.charcol-overlay"));
+        }
+    }, 50);
 };
 
 const addViewIcon = (target) => {
@@ -312,7 +326,12 @@ const addPersonIcon = (target) => {
         markSetting.card[cardId].delegated = !markSetting.card[cardId].delegated;
         updateDelegated()        
     });    
-    $personIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
+    // $personIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
+    // setTimeout(() => {
+        if ($(target.closest("[data-testid='list-card']").find("div.charcol-overlay")).length > 0) {
+            $personIcon.appendTo(target.closest("[data-testid='list-card']").find("div.charcol-overlay"));
+        }
+    // }, 50);
 };
 
 const addStarIcon = (target) => {
@@ -323,7 +342,8 @@ const addStarIcon = (target) => {
         ev.stopImmediatePropagation();
         ev.preventDefault();
         ev.stopPropagation();
-        let path = $(this).closest("a.list-card").prop("href").split("/");
+        let path = $(target).closest("[data-testid='list-card']").find("a[data-testid='card-name']").prop("href").split("/");
+        // let path = $(this).closest("a[data-testid='list-card']").prop("href").split("/");
         if (!path || path[3] != "c" || !path[4]) return;
         const cardId = path[4];
         if (!markSetting.card) markSetting.card = {};
@@ -333,7 +353,12 @@ const addStarIcon = (target) => {
         store("tmSetting", markSetting);
         updateStar()        
     });   
-    $starIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
+    // $starIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
+    // setTimeout(() => {
+        if ($(target.closest("[data-testid='list-card']").find("div.charcol-overlay")).length > 0) {
+            $starIcon.appendTo(target.closest("[data-testid='list-card']").find("div.charcol-overlay"));
+        }
+    // }, 50);
 };
 
 const addOutcomeText = (target) => {
@@ -343,7 +368,13 @@ const addOutcomeText = (target) => {
     const $outcomeText = jQuery(
         `<div class="badge badge-text outcome-text">${outcomeText}</div>`
     );    
-    $outcomeText.insertAfter(target.find("span.js-open-quick-card-editor"));
+    // $outcomeText.insertAfter(target.find("span.js-open-quick-card-editor"));
+    // setTimeout(() => {
+        if ($(target.closest("[data-testid='list-card']").find("div.charcol-overlay")).length > 0) {
+            $outcomeText.appendTo(target.closest("[data-testid='list-card']").find("div.charcol-overlay"));
+        }
+    // }, 50);
+
 };
 
 const addCharcolOverlay = (target) => {
@@ -399,9 +430,9 @@ const updateDelegated = () => {
 
 const updateStar = () => {
     $("div.card-star-wrapper").remove()
-    $(".list-card").removeClass("filter-star")
+    $("a[data-testid='card-name']").removeClass("filter-star")
     if (markSetting.card) {
-        document.querySelectorAll(".list-card").forEach((el) => {
+        document.querySelectorAll("a[data-testid='card-name']").forEach((el) => {
             if (!$(el).prop("href")) return;
             let path = $(el).prop("href").split("/");
             if (!path || path[3] != "c" || !path[4]) return;
@@ -418,9 +449,10 @@ const updateStar = () => {
                 // if (!markSetting.hideIcon)
                 //     $cardStarElem.insertBefore($(el).find("div.badges"))
                 // else
-                    $(el).find('span.list-card-title').prepend($cardStarElem)
-                return
+                    // $(el).prepend($cardStarElem)
+                    $cardStarElem.appendTo(el);
             }
+            console.log("markSetting.filterStar>>>>>>>>>",markSetting.filterStar)
             if (markSetting.filterStar)
                 $(el).addClass("filter-star")
         });
@@ -436,6 +468,7 @@ const rebuildDynamicStyles = () => {
     updateDelegated()
     updateCompleteLineThrough()
     updateStar()
+    console.log("markSetting: ", markSetting)
     
     if (markSetting.singleLine) {
         $("#board").addClass("trello-mark-single-line");
@@ -448,7 +481,7 @@ const rebuildDynamicStyles = () => {
     } else {
         $("#board").removeClass("trello-mark-hide-icons");
     }
-
+    console.log("markSettingfont",markSetting.font)
     if (markSetting.font) {
         css += `#board { font-size: ${markSetting.font}px; line-height: ${markSetting.font * 10 / 7}px;} `;
         css += `div.badge { min-height: ${markSetting.font}px; height: ${markSetting.font * 10 / 7}px;  line-height: ${markSetting.font * 10 / 7}px; } `;
@@ -465,7 +498,8 @@ const rebuildDynamicStyles = () => {
     }
 
     if (markSetting.card) {
-        document.querySelectorAll(".list-card").forEach((el) => {
+        // document.querySelectorAll("a[data-testid='card-name']").forEach((el) => {
+            document.querySelectorAll(".list-card").forEach((el) => {
             if (!$(el).prop("href")) return;
             let path = $(el).prop("href").split("/");
             if (!path || path[3] != "c" || !path[4]) return;
@@ -482,6 +516,7 @@ const rebuildDynamicStyles = () => {
     }
 
     for (let listId in markSetting.list) {
+        console.log("markSetting.list",markSetting.list);
         if (markSetting.list[listId].backgroundColor) {
             css += `.trello-mark-list-${listId} .js-list-content.list {background-color: ${markSetting.list[listId].backgroundColor}}`;
         }
@@ -492,9 +527,10 @@ const rebuildDynamicStyles = () => {
     }
 
     if (markSetting.list) {
-        document.querySelectorAll(".js-list").forEach((el) => {
+        document.querySelectorAll("textarea[data-testid='quick-card-editor-card-title']").forEach((el) => {
+            console.log("markSettinglist->el",el)
             let listId = renderAttrName(
-                $(el).find("textarea.list-header-name").val()
+                $(el).val()
             );
             if (
                 markSetting.list &&
@@ -755,16 +791,18 @@ const addHoverIcons = (target) => {
     addStarIcon(target);
 }
 
-const removeHoverIcons = (target) => {    
-    console.log("remove")
-    $('[data-testid="list-card"] span.icon-archive').remove()
-    $('[data-testid="list-card"] span.icon-check').remove()
-    $('[data-testid="list-card"] span.icon-star').remove()
-    $('[data-testid="list-card"] span.icon-clock').remove()
-    $('[data-testid="list-card"] span.icon-subscribe').remove()
-    $('[data-testid="list-card"] span.icon-member').remove()
-    $('[data-testid="list-card"] div.outcome-text').remove()    
-    $('[data-testid="list-card"] div.charcol-overlay').remove()    
+const removeHoverIcons = (target) => {
+    setTimeout(() => {
+        $('[data-testid="trello-card"] span.icon-archive').remove()
+        $('[data-testid="trello-card"] span.icon-check').remove()
+        $('[data-testid="trello-card"] span.icon-star').remove()
+        $('[data-testid="trello-card"] span.icon-clock').remove()
+        $('[data-testid="trello-card"] span.icon-subscribe').remove()
+        $('[data-testid="trello-card"] span.icon-member').remove()
+        $('[data-testid="trello-card"] div.outcome-text').remove()    
+        $('[data-testid="trello-card"] div.charcol-overlay').remove() 
+    }, 100);
+       
 }
 
 const updateBoard = () => {
@@ -777,23 +815,63 @@ const updateBoard = () => {
     addUnshiftCard();    
 };
 
-jQuery("title").bind("DOMSubtreeModified", function () {
-    let title = jQuery.trim(jQuery(this).text());
-    if (!window.location.href) return;
-    let path = window.location.href.split("/");
 
-    if (path[3] != "b") return; // works for boards only, not cards
 
-    // check if board was changed
-    if (title == page.boardTitle || page.boardId == path[4]) {        
-        updateCompleteLineThrough()
-        return
-    };
-    page.boardTitle = title;
-    page.boardId = path[4];
-    console.log("board changed");
-    setTimeout(updateBoard, 500);
-});
+function handleTitleChange(mutationsList) {
+    for (const mutation of mutationsList) {
+        if (mutation.type === 'childList' && mutation.target === document.head) {
+            const title = jQuery.trim(jQuery("title").text());
+            if (!window.location.href) return;
+            const path = window.location.href.split("/");
+            if (path[3] !== "b") return; // works for boards only, not cards
+
+            // Check if board was changed
+            if (title === page.boardTitle || page.boardId === path[4]) {
+                updateCompleteLineThrough();
+                return;
+            }
+            page.boardTitle = title;
+            page.boardId = path[4];
+            console.log("board changed");
+            setTimeout(updateBoard, 500);
+        }
+    }
+}
+
+// Create a MutationObserver to monitor changes in the head element
+const observer = new MutationObserver(handleTitleChange);
+
+// Start observing changes in the head element
+observer.observe(document.head, { childList: true });
+
+// Initial check for the current board
+handleTitleChange([{ type: 'childList', target: document.head }]);
+
+// function handleMutations(mutationsList) {
+//     for (let mutation of mutationsList) {
+//         if (mutation.type === 'childList' && mutation.target.getAttribute('data-testid') === 'trello-card') {
+//             let card = $(mutation.target);
+//             if (!card.prop("href")) return;
+//             let path = card.prop("href").split("/");
+//             if (!path || path[3] !== "c" || !path[4]) return;
+//             const cardId = path[4];
+//             if (markSetting.card && markSetting.card[cardId] && 
+//                 (markSetting.card[cardId].backgroundColor || markSetting.card[cardId].fontColor || markSetting.card[cardId].timeValue)
+//             ) {
+//                 rebuildDynamicStyles();
+//             }
+//         }
+//     }
+// }
+
+// // Create a MutationObserver instance
+// const observer = new MutationObserver(handleMutations);
+
+// // Define the options for the observer
+// const config = { childList: true, subtree: true };
+
+// // Start observing changes to the DOM
+// observer.observe(document, config);
 
 // jQuery(document).on("DOMSubtreeModified", ".list-card", function (e) {
 //     if (!$(this).prop("href")) return;
@@ -807,11 +885,11 @@ jQuery("title").bind("DOMSubtreeModified", function () {
 //     }
 // });
 
-jQuery(document).on("mouseenter", "[data-testid='list-card']", function(e) {
+jQuery(document).on("mouseenter", "[data-testid='trello-card']", function(e) {
     addHoverIcons($(this))
 })
 
-jQuery(document).on("mouseleave", "[data-testid='list-card']", function(e) {
+jQuery(document).on("mouseleave", "[data-testid='trello-card']", function(e) {
     removeHoverIcons($(this))
 })
 
