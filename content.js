@@ -266,11 +266,11 @@ const addClockIcon = (target) => {
       .split("/");
     if (!path || path[3] != "c" || !path[4]) return;
     const cardId = path[4];
-    $(this).closest(".list-card").find(".js-open-quick-card-editor").click();
-    waitForElm(".quick-card-editor-card .list-card-quick-edit").then(() => {
-      $(".quick-card-editor-card .list-card-quick-edit").remove();
-      $(".quick-card-editor-card .js-save-edits").remove();
-      $(".quick-card-editor-card .quick-card-editor-buttons").empty();
+    $(target).closest(`[data-testid="list-card"]`).find(`[data-testid="quick-card-editor-button"]`).click();
+    setTimeout(() => {
+    waitForElm(`[data-testid='quick-card-editor-overlay']`).then(() => {
+      $(`[data-testid='quick-card-editor-overlay'] form`).remove();
+      $(`[data-testid="quick-card-editor-buttons"]`).empty();
       let timeArr = [0, 5, 10, 15, 20, 25, 30, 45, 60, 120, 180];
       for (const item of timeArr) {
         let $timeMenu =
@@ -285,15 +285,19 @@ const addClockIcon = (target) => {
             if (!markSetting.card) markSetting.card = {};
             if (!markSetting.card[cardId]) markSetting.card[cardId] = {};
             markSetting.card[cardId].timeValue = item;
-            $(".quick-card-editor").remove();
+            
             rebuildDynamicStyles();
+            $(`[data-testid="quick-card-editor-buttons"]`).parent().remove();
+            $(`[data-testid="quick-card-editor-overlay"]`).css({backgroundColor: 'rgba(0,0,0,0)'})
+            
           })
         );
-        $(".quick-card-editor-card .quick-card-editor-buttons").append(
+        $(`[data-testid="quick-card-editor-buttons"]`).append(
           $timeMenu
         );
       }
     });
+  }, 1);
   });
   $clockIcon.insertAfter(target.find(`div.charcol-overlay`));
   // $clockIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
@@ -583,9 +587,9 @@ const rebuildDynamicStyles = () => {
   $(".card-time-wrapper").remove();
   $("textarea.mod-list-name").removeClass("with-time-wrapper");
   if (markSetting.card && !markSetting.hideIcon) {
-    document.querySelectorAll(".js-list").forEach((listElem) => {
+    document.querySelectorAll(`[data-testid="list"]`).forEach((listElem) => {
       let totalTime = 0;
-      listElem.querySelectorAll(".list-card").forEach((cardElem) => {
+      listElem.querySelectorAll(`a[data-testid="card-name"]`).forEach((cardElem) => {
         if (!$(cardElem).prop("href")) return;
         let path = $(cardElem).prop("href").split("/");
         if (!path || path[3] != "c" || !path[4]) return;
@@ -603,17 +607,18 @@ const rebuildDynamicStyles = () => {
               markSetting.font ? (markSetting.font * 10) / 7 : 20
             }px">${markSetting.card[cardId].timeValue}</span>`
           );
-          $(cardElem).find("span.list-card-title").prepend($cardTimeElem);
+          $(cardElem).prepend($cardTimeElem);
         }
       });
       if (totalTime) {
         const $listTimeElem = jQuery(
           `<span class="list-time-wrapper">${totalTime}</span>`
         );
-        $listTimeElem.insertBefore($(listElem).find("textarea.mod-list-name"));
+        $listTimeElem.insertBefore($(listElem).find(`[data-testid="list-name"]`).parent());
         $(listElem)
-          .find("textarea.mod-list-name")
+          .find(`[data-testid="list-name"]`)
           .addClass("with-time-wrapper");
+          // $(listElem).find(`[data-testid="list-name"]`).css({left:20, display: 'inline'});
       }
     });
   }

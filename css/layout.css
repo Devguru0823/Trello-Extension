@@ -352,9 +352,10 @@
   
   .list-time-wrapper {
     display: inline-block;
-    position: relative;
+    /* position: relative; */
     background: #0bd377;
     margin-left: 10px;
+    margin-top: 5px;
     padding: 0px 8px;
     border-radius: 10px;
     font-size: 12px;
@@ -364,7 +365,7 @@
   }
   
   .with-time-wrapper {
-    display: inline-block;
+    display: inline;
     width: 150px !important;
   }
   
