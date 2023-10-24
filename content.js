@@ -423,11 +423,11 @@ const updateCompleteLineThrough = () => {
 };
 
 const updateDelegated = () => {
-  $("span.list-card-title").removeClass("trello-mark-delegated");
+  $(`a[data-testid="card-name"]`).removeClass("trello-mark-delegated");
   if (markSetting.card) {
-    document.querySelectorAll(".list-card").forEach((el) => {
-      if (!$(el).prop("href")) return;
-      let path = $(el).prop("href").split("/");
+    document.querySelectorAll(`li[data-testid="list-card"]`).forEach((el) => {
+      if (!$(el).find(`a[data-testid="card-name"]`).prop("href")) return;
+      let path = $(el).find(`a[data-testid="card-name"]`).prop("href").split("/");
       if (!path || path[3] != "c" || !path[4]) return;
       let cardId = path[4];
       if (
@@ -435,7 +435,7 @@ const updateDelegated = () => {
         markSetting.card[cardId] &&
         markSetting.card[cardId].delegated
       )
-        $(el).find("span.list-card-title").addClass(`trello-mark-delegated`);
+        $(el).find(`a[data-testid="card-name"]`).addClass(`trello-mark-delegated`);
     });
   }
 };
