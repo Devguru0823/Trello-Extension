@@ -44,7 +44,7 @@ let renderAttrName = function (name) {
 };
 
 const store = function (key, value) {
-  chrome.storage.sync.set({ [key]: value });
+  if (key) chrome.storage.sync.set({ [key]: value });
 };
 
 const loadSavedSetting = () => {
@@ -208,23 +208,39 @@ const addCompleteIcon = (target) => {
     `<span class="dark-hover icon-check icon-sm js-card-menu list-card-operation"></span>`
   );
   $completeIcon.on("click", function (ev) {
-    // $titleElem = $(this).closest('a.list-card').find("span.list-card-title")
-    // if ($titleElem.hasClass("trello-mark-line-through")) $titleElem.removeClass("trello-mark-line-through")
-    // else $titleElem.addClass("trello-mark-line-through")
+    ev.stopImmediatePropagation();
+    ev.preventDefault();
+    ev.stopPropagation();
+    let path = target
+      .find(`a[data-testid="card-name"]`)
+      .prop("href")
+      .split("/");
+    if (!path || path[3] != "c" || !path[4]) return;
+    const cardId = path[4];
+    if (!markSetting.card) markSetting.card = {};
+    if (!markSetting.card[cardId]) markSetting.card[cardId] = {};
+    markSetting.card[cardId].done = !markSetting.card[cardId].done;
+    store("tmSetting", markSetting);
+    updateCompleted();
+    // $titleElem = target.find(`a[data-testid="card-name"]`);
+    // if ($titleElem.hasClass("trello-mark-line-through"))
+    //   $titleElem.removeClass("trello-mark-line-through");
+    // else $titleElem.addClass("trello-mark-line-through");
     // changeCompleteByIcon = true
-    waitForElm("div.card-detail-window").then((elm) => {
-      // $('div.editor-sticky-toolbar').css("display", "none")
-      $(
-        "div.custom-field-detail-item h3.card-detail-item-header[title='Complete']+span"
-      )?.click();
-      $("div.editor-sticky-toolbar a.dialog-close-button")[0].dispatchEvent(
-        new MouseEvent("click", {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-        })
-      );
-    });
+
+    // waitForElm("div.card-detail-window").then((elm) => {
+    //   // $('div.editor-sticky-toolbar').css("display", "none")
+    //   $(
+    //     "div.custom-field-detail-item h3.card-detail-item-header[title='Complete']+span"
+    //   )?.click();
+    //   $("div.editor-sticky-toolbar a.dialog-close-button")[0].dispatchEvent(
+    //     new MouseEvent("click", {
+    //       bubbles: true,
+    //       cancelable: true,
+    //       view: window,
+    //     })
+    //   );
+    // });
   });
   // $completeIcon.insertAfter(target.find("span.js-open-quick-card-editor"));
   $completeIcon.insertAfter(target.find(`div.charcol-overlay`));
@@ -259,75 +275,86 @@ const addClockIcon = (target) => {
     ev.preventDefault();
     ev.stopPropagation();
     // let path = $(this).closest("a.list-card").prop("href").split("/");
-    let path = $(this)
-      .closest(`li[data-testid="list-card"]`)
+    let path = target
       .find(`a[data-testid="card-name"]`)
       .prop("href")
       .split("/");
     if (!path || path[3] != "c" || !path[4]) return;
     const cardId = path[4];
-    $(target).closest(`[data-testid="list-card"]`).find(`[data-testid="quick-card-editor-button"]`).click();
+    target.find(`[data-testid="quick-card-editor-button"]`).click();
     setTimeout(() => {
-    waitForElm(`[data-testid='quick-card-editor-overlay']`).then(() => {
-      $(`[data-testid='quick-card-editor-overlay'] form`).remove();
-      $(`[data-testid="quick-card-editor-buttons"]`).empty();
-      let timeArr = [0, 5, 10, 15, 20, 25, 30, 45, 60, 120, 180];
-      for (const item of timeArr) {
-        let $timeMenu =
-          jQuery(`<a class="quick-card-editor-buttons-item" href="#">
+      waitForElm(`[data-testid='quick-card-editor-overlay']`).then(() => {
+        $(`[data-testid='quick-card-editor-overlay'] form`).remove();
+        $(`[data-testid="quick-card-editor-buttons"]`).empty();
+        let timeArr = [0, 5, 10, 15, 20, 25, 30, 45, 60, 120, 180];
+        for (const item of timeArr) {
+          let $timeMenu =
+            jQuery(`<a class="quick-card-editor-buttons-item" href="#">
                     <span class="quick-card-editor-buttons-item-text">${
                       item ? item : "Remove"
                     }</span>
                 </a>`);
-        $timeMenu.on(
-          "click",
-          debounce(() => {
-            if (!markSetting.card) markSetting.card = {};
-            if (!markSetting.card[cardId]) markSetting.card[cardId] = {};
-            markSetting.card[cardId].timeValue = item;
-            
-            rebuildDynamicStyles();
-            $(`[data-testid="quick-card-editor-buttons"]`).parent().remove();
-            $(`[data-testid="quick-card-editor-overlay"]`).css({backgroundColor: 'rgba(0,0,0,0)'})
-            
-          })
-        );
-        $(`[data-testid="quick-card-editor-buttons"]`).append(
-          $timeMenu
-        );
-      }
-    });
-  }, 1);
+          $timeMenu.on(
+            "click",
+            debounce(() => {
+              if (!markSetting.card) markSetting.card = {};
+              if (!markSetting.card[cardId]) markSetting.card[cardId] = {};
+              markSetting.card[cardId].timeValue = item;
+
+              rebuildDynamicStyles();
+              $(`[data-testid="quick-card-editor-buttons"]`).parent().remove();
+              $(`[data-testid="quick-card-editor-overlay"]`).css({
+                backgroundColor: "rgba(0,0,0,0)",
+              });
+            })
+          );
+          $(`[data-testid="quick-card-editor-buttons"]`).append($timeMenu);
+        }
+      });
+    }, 1);
   });
   $clockIcon.insertAfter(target.find(`div.charcol-overlay`));
   // $clockIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
 };
 
-const addViewIcon = (target) => {
-  const $viewIcon = jQuery(
-    `<span class="dark-hover icon-subscribe icon-sm js-card-menu list-card-operation"></span>`
+const addEditIcon = (target) => {
+  const $editIcon = jQuery(
+    `<span class="dark-hover icon-edit icon-sm js-card-menu list-card-operation"></span>`
   );
-  $viewIcon.on("click", function (ev) {
+  $editIcon.on("click", function (ev) {
     ev.stopImmediatePropagation();
     ev.preventDefault();
     ev.stopPropagation();
-    console.log(
-      $(this)
-        .closest(`li[data-testid="list-card"]`)
-        .find(`a[data-testid="card-name"]`)
-    );
-    $(this)
-      .closest(`li[data-testid="list-card"]`)
-      .find(`a[data-testid="card-name"]`)[0]
-      .click();
+    target.find(`button[data-testid="quick-card-editor-button"]`).click();
     // let path = $(this).closest("a.list-card").prop("href").split("/");
     // let path = $(this).closest(`li[data-testid="list-card"]`).find(`a[data-testid="card-name"]`).prop("href")
     // window.location.href=path;
     // history.pushState(null, null, path);
   });
-  // $viewIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
-  $viewIcon.insertAfter(target.find(`div.charcol-overlay`));
+  // $editIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
+  $editIcon.insertAfter(target.find(`div.charcol-overlay`));
 };
+
+// const addViewIcon = (target) => {
+//   const $viewIcon = jQuery(
+//     `<span class="dark-hover icon-subscribe icon-sm js-card-menu list-card-operation"></span>`
+//   );
+//   $viewIcon.on("click", function (ev) {
+//     ev.stopImmediatePropagation();
+//     ev.preventDefault();
+//     ev.stopPropagation();
+//     $(this)
+//       .closest(`li[data-testid="list-card"]`)
+//       .find(`a[data-testid="card-name"]`)
+//       .click();
+//     // let path = $(this).closest("a.list-card").prop("href").split("/");
+//     // let path = $(this).closest(`li[data-testid="list-card"]`).find(`a[data-testid="card-name"]`).prop("href")
+//     // window.location.href=path;
+//     // history.pushState(null, null, path);
+//   });
+//   // $viewIcon.insertBefore(target.find("span.js-open-quick-card-editor"));
+//   $viewIcon.insertAfter(target.find(`div.charcol-overlay`));
+// };
 
 const addPersonIcon = (target) => {
   const $personIcon = jQuery(
@@ -338,8 +365,7 @@ const addPersonIcon = (target) => {
     ev.preventDefault();
     ev.stopPropagation();
     // let path = $(this).closest("a.list-card").prop("href").split("/");
-    let path = $(this)
-      .closest(`li[data-testid="list-card"]`)
+    let path = target
       .find(`a[data-testid="card-name"]`)
       .prop("href")
       .split("/");
@@ -363,8 +389,7 @@ const addStarIcon = (target) => {
     ev.preventDefault();
     ev.stopPropagation();
     // let path = $(this).closest("a.list-card").prop("href").split("/");
-    let path = $(this)
-      .closest(`li[data-testid="list-card"]`)
+    let path = target
       .find(`a[data-testid="card-name"]`)
       .prop("href")
       .split("/");
@@ -395,7 +420,10 @@ const addOutcomeText = (target) => {
 
 const addCharcolOverlay = (target) => {
   let $charcolOverlay = jQuery(`<div class="charcol-overlay"></div>`);
-  $charcolOverlay.appendTo(target[0]);
+
+  $charcolOverlay.insertAfter(
+    target.find(`button[data-testid="quick-card-editor-button"]`)
+  );
 };
 
 const changeWidth = (val) => {
@@ -431,7 +459,10 @@ const updateDelegated = () => {
   if (markSetting.card) {
     document.querySelectorAll(`li[data-testid="list-card"]`).forEach((el) => {
       if (!$(el).find(`a[data-testid="card-name"]`).prop("href")) return;
-      let path = $(el).find(`a[data-testid="card-name"]`).prop("href").split("/");
+      let path = $(el)
+        .find(`a[data-testid="card-name"]`)
+        .prop("href")
+        .split("/");
       if (!path || path[3] != "c" || !path[4]) return;
       let cardId = path[4];
       if (
@@ -439,7 +470,9 @@ const updateDelegated = () => {
         markSetting.card[cardId] &&
         markSetting.card[cardId].delegated
       )
-        $(el).find(`a[data-testid="card-name"]`).addClass(`trello-mark-delegated`);
+        $(el)
+          .find(`a[data-testid="card-name"]`)
+          .addClass(`trello-mark-delegated`);
     });
   }
 };
@@ -458,27 +491,45 @@ const updateStar = () => {
         .split("/");
       if (!path || path[3] != "c" || !path[4]) return;
       let cardId = path[4];
-      if (
-        markSetting.card &&
-        markSetting.card[cardId] &&
-        markSetting.card[cardId].star
-      ) {
-        const $cardStarElem = jQuery(`<div class="card-star-wrapper" 
+      if (markSetting.card && markSetting.card[cardId]) {
+        if (markSetting.card[cardId].star) {
+          const $cardStarElem = jQuery(`<div class="card-star-wrapper" 
                 style="width: ${
                   markSetting.font ? (markSetting.font * 18) / 14 : 18
                 }px; height: ${
-          markSetting.font ? (markSetting.font * 18) / 14 : 18
-        }px;">
+            markSetting.font ? (markSetting.font * 18) / 14 : 18
+          }px;">
                     <svg style="color: #0bd377;" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 512 512"><path d="M496,203.3H312.36L256,32,199.64,203.3H16L166.21,308.7,107.71,480,256,373.84,404.29,480,345.68,308.7Z" fill="#0bd377"></path></svg>
                 </div>`);
-        // if (!markSetting.hideIcon)
-        //     $cardStarElem.insertBefore($(el).find("div.badges"))
-        // else
-        // $(el).find('span.list-card-title').prepend($cardStarElem)
-        $(el).find(`a[data-testid="card-name"]`).prepend($cardStarElem);
-        return;
+          // if (!markSetting.hideIcon)
+          //     $cardStarElem.insertBefore($(el).find("div.badges"))
+          // else
+          // $(el).find('span.list-card-title').prepend($cardStarElem)
+          $(el).find(`a[data-testid="card-name"]`).prepend($cardStarElem);
+          return;
+        }
       }
       if (markSetting.filterStar) $(el).addClass("filter-star");
+    });
+  }
+};
+
+const updateCompleted = () => {
+  if (markSetting.card) {
+    document.querySelectorAll(`li[data-testid="list-card"]`).forEach((el) => {
+      if (!$(el).find(`a[data-testid="card-name"]`).prop("href")) return;
+      const $titleElem = $(el).find(`a[data-testid="card-name"]`);
+      let path = $titleElem.prop("href").split("/");
+      if (!path || path[3] != "c" || !path[4]) return;
+      let cardId = path[4];
+      if (markSetting.card && markSetting.card[cardId]) {
+        if (markSetting.card[cardId].done) {
+          if (!$titleElem.hasClass("trello-mark-line-through"))
+            $titleElem.addClass("trello-mark-line-through");
+        } else {
+          $titleElem.removeClass("trello-mark-line-through");
+        }
+      }
     });
   }
 };
@@ -486,21 +537,20 @@ const updateStar = () => {
 const rebuildDynamicStyles = () => {
   if (onRebuild) return;
   onRebuild = true;
-  let css = "";
   store("tmSetting", markSetting);
+  updateCompleteLineThrough();
+  if (document.querySelectorAll(`li[data-testid="list-card"]`).length === 0) {
+    setTimeout(() => {
+      onRebuild = false;
+      rebuildDynamicStyles();
+    }, 500);
+    return;
+  }
+  let css = "";
   // build font enchancements
   updateDelegated();
-  updateCompleteLineThrough();
-  const thisTimer = () => {
-    if (document.querySelectorAll(`li[data-testid="list-card"]`).length === 0) {
-      setTimeout(() => {
-        thisTimer();
-      }, 500);
-    } else {
-      updateStar();
-    }
-  };
-  thisTimer();
+  updateStar();
+  updateCompleted();
 
   if (markSetting.singleLine) {
     $("#board").addClass("trello-mark-single-line");
@@ -540,9 +590,10 @@ const rebuildDynamicStyles = () => {
   }
 
   if (markSetting.card) {
-    document.querySelectorAll(".list-card").forEach((el) => {
-      if (!$(el).prop("href")) return;
-      let path = $(el).prop("href").split("/");
+    document.querySelectorAll(`li[data-testid="list-card"]`).forEach((el) => {
+      const $title = $(el).find(`a[data-testid="card-name"]`);
+      if (!$title.prop("href")) return;
+      let path = $title.prop("href").split("/");
       if (!path || path[3] != "c" || !path[4]) return;
       let cardId = path[4];
       if (
@@ -551,8 +602,8 @@ const rebuildDynamicStyles = () => {
         (markSetting.card[cardId].backgroundColor ||
           markSetting.card[cardId].fontColor)
       )
-        $(el).addClass(`trello-mark-card-${cardId}`);
-      else $(el).removeClass(`trello-mark-card-${cardId}`);
+        $title.addClass(`trello-mark-card-${cardId}`);
+      else $title.removeClass(`trello-mark-card-${cardId}`);
     });
   }
 
@@ -583,42 +634,47 @@ const rebuildDynamicStyles = () => {
   }
   $dynamicStyles.html(css);
 
+  /**********************     time       */
   $(".list-time-wrapper").remove();
   $(".card-time-wrapper").remove();
   $("textarea.mod-list-name").removeClass("with-time-wrapper");
   if (markSetting.card && !markSetting.hideIcon) {
     document.querySelectorAll(`[data-testid="list"]`).forEach((listElem) => {
       let totalTime = 0;
-      listElem.querySelectorAll(`a[data-testid="card-name"]`).forEach((cardElem) => {
-        if (!$(cardElem).prop("href")) return;
-        let path = $(cardElem).prop("href").split("/");
-        if (!path || path[3] != "c" || !path[4]) return;
-        let cardId = path[4];
-        if (
-          markSetting.card &&
-          markSetting.card[cardId] &&
-          markSetting.card[cardId].timeValue
-        ) {
-          totalTime += markSetting.card[cardId].timeValue;
-          const $cardTimeElem = jQuery(
-            `<span class="card-time-wrapper" style="font-size: ${
-              markSetting.font ? markSetting.font : 14
-            }px; line-height: ${
-              markSetting.font ? (markSetting.font * 10) / 7 : 20
-            }px">${markSetting.card[cardId].timeValue}</span>`
-          );
-          $(cardElem).prepend($cardTimeElem);
-        }
-      });
+      listElem
+        .querySelectorAll(`a[data-testid="card-name"]`)
+        .forEach((cardElem) => {
+          if (!$(cardElem).prop("href")) return;
+          let path = $(cardElem).prop("href").split("/");
+          if (!path || path[3] != "c" || !path[4]) return;
+          let cardId = path[4];
+          if (
+            markSetting.card &&
+            markSetting.card[cardId] &&
+            markSetting.card[cardId].timeValue
+          ) {
+            totalTime += markSetting.card[cardId].timeValue;
+            const $cardTimeElem = jQuery(
+              `<span class="card-time-wrapper" style="font-size: ${
+                markSetting.font ? markSetting.font : 14
+              }px; line-height: ${
+                markSetting.font ? (markSetting.font * 10) / 7 : 20
+              }px">${markSetting.card[cardId].timeValue}</span>`
+            );
+            $(cardElem).prepend($cardTimeElem);
+          }
+        });
       if (totalTime) {
         const $listTimeElem = jQuery(
           `<span class="list-time-wrapper">${totalTime}</span>`
         );
-        $listTimeElem.insertBefore($(listElem).find(`[data-testid="list-name"]`).parent());
+        $listTimeElem.insertBefore(
+          $(listElem).find(`[data-testid="list-name"]`).parent()
+        );
         $(listElem)
           .find(`[data-testid="list-name"]`)
           .addClass("with-time-wrapper");
-          // $(listElem).find(`[data-testid="list-name"]`).css({left:20, display: 'inline'});
+        // $(listElem).find(`[data-testid="list-name"]`).css({left:20, display: 'inline'});
       }
     });
   }
@@ -660,27 +716,33 @@ const changeBackgroundColorQuickCardEditor = (val) => {
 };
 
 const changeFontColorQuickCardEditor = (val) => {
-  if (val)
-    $(".quick-card-editor-card .list-card-edit-title.js-edit-card-title").css(
-      "color",
-      val
-    );
-  else
-    $(".quick-card-editor-card .list-card-edit-title.js-edit-card-title").css(
-      "color",
-      ""
-    );
+  // if (val)
+  //   $(".quick-card-editor-card .list-card-edit-title.js-edit-card-title").css(
+  //     "color",
+  //     val
+  //   );
+  // else
+  //   $(".quick-card-editor-card .list-card-edit-title.js-edit-card-title").css(
+  //     "color",
+  //     ""
+  //   );
+  if (val) $(`[data-testid="quick-card-editor-card-title"]`).css("color", val);
+  else $(`[data-testid="quick-card-editor-card-title"]`).css("color", "");
 };
 
 jQuery(document).bind("mouseup", function (e) {
   let $target = jQuery(e.target);
   // capture list settings appearance
-  if ($target.hasClass("js-open-quick-card-editor")) {
-    let path = $target.parents("a.list-card").prop("href").split("/");
+  if ($target.hasClass(`icon-edit`)) {
+    let path = $target
+      .parents(`li[data-testid="list-card"]`)
+      .find(`a[data-testid="card-name"]`)
+      .prop("href")
+      .split("/");
     if (!path || path[3] != "c" || !path[4]) return;
     const cardId = path[4];
-    let backgroundColor = "";
-    let fontColor = "";
+    let backgroundColor = "#ffffff";
+    let fontColor = "#000000";
     if (markSetting.card && markSetting.card[cardId]) {
       if (markSetting.card[cardId].backgroundColor)
         backgroundColor = markSetting.card[cardId].backgroundColor;
@@ -691,13 +753,12 @@ jQuery(document).bind("mouseup", function (e) {
       //card background menu
       changeBackgroundColorQuickCardEditor(backgroundColor);
       changeFontColorQuickCardEditor(fontColor);
-      let $backgroundColorMenu =
-        jQuery(`<a class="quick-card-editor-buttons-item" href="#">
-            <span class="icon-sm icon-board light"></span>
+      let $backgroundColorMenu = jQuery(`<a class="BppQGb2j7TfyB5" href="#">
+            <span class="gMwAd04JA9b_bj icon-sm icon-board"></span>
             <span class="quick-card-editor-buttons-item-text">Background</span>
         </a>`);
       let $cardBackgroundColor = jQuery(
-        `<input type="text" class="trello-mark-card-menu" value="${backgroundColor}">`
+        `<input type="color" class="trello-mark-card-menu" value="${backgroundColor}">`
       );
       $cardBackgroundColor.on(
         "input",
@@ -714,13 +775,12 @@ jQuery(document).bind("mouseup", function (e) {
         .insertBefore("#convert-card-role-button-react-root");
 
       //card font menu
-      let $fontColorMenu =
-        jQuery(`<a class="quick-card-editor-buttons-item" href="#">
-            <span class="icon-sm icon-edit light"></span>
+      let $fontColorMenu = jQuery(`<a class="BppQGb2j7TfyB5" href="#">
+            <span class="gMwAd04JA9b_bj icon-sm icon-edit"></span>
             <span class="quick-card-editor-buttons-item-text">Font Color</span>
         </a>`);
       let $cardFontColor = jQuery(
-        `<input type="text" class="trello-mark-card-menu" value="${fontColor}">`
+        `<input type="color" class="trello-mark-card-menu" value="${fontColor}">`
       );
       $cardFontColor.on(
         "input",
@@ -735,6 +795,10 @@ jQuery(document).bind("mouseup", function (e) {
       $fontColorMenu
         .append($cardFontColor)
         .insertBefore("#convert-card-role-button-react-root");
+      $(`[data-testid="quick-card-editor-buttons"]`).append($fontColorMenu);
+      $(`[data-testid="quick-card-editor-buttons"]`).append(
+        $backgroundColorMenu
+      );
     }, 100);
   }
 
@@ -827,13 +891,14 @@ jQuery(document).bind("mouseup", function (e) {
 
 const addHoverIcons = (target) => {
   addCharcolOverlay(target);
-  addArchiveIcon(target);
+  addEditIcon(target);
   // addViewIcon(target);
-  addCompleteIcon(target);
-  addClockIcon(target);
-  addOutcomeText(target);
-  addPersonIcon(target);
   addStarIcon(target);
+  addPersonIcon(target);
+  addOutcomeText(target);
+  addClockIcon(target);
+  addCompleteIcon(target);
+  addArchiveIcon(target);
 };
 
 const removeHoverIcons = (target) => {
@@ -841,8 +906,9 @@ const removeHoverIcons = (target) => {
   $('[data-testid="list-card"] span.icon-check').remove();
   $('[data-testid="list-card"] span.icon-star').remove();
   $('[data-testid="list-card"] span.icon-clock').remove();
-  $('[data-testid="list-card"] span.icon-subscribe').remove();
+  // $('[data-testid="list-card"] span.icon-subscribe').remove();
   $('[data-testid="list-card"] span.icon-member').remove();
+  $('[data-testid="list-card"] span.icon-edit').remove();
   $('[data-testid="list-card"] div.outcome-text').remove();
   $('[data-testid="list-card"] div.charcol-overlay').remove();
 };
@@ -907,7 +973,18 @@ jQuery(document).on("mouseenter", "[data-testid='list-card']", function (e) {
 
 jQuery(document).on("mouseleave", "[data-testid='list-card']", function (e) {
   removeHoverIcons($(this));
+  onRebuild = false;
+  rebuildDynamicStyles();
 });
+
+// jQuery(document).on("drop", `[data-drop-target-for-element="true"]`, function (e) {
+//   onRebuild = false;
+//   rebuildDynamicStyles();
+// });
+// jQuery(document).on("drop", `[data-drop-target-for-file="true"]`, function (e) {
+//   onRebuild = false;
+//   rebuildDynamicStyles();
+// });
 
 const addDynamicStyles = () => {
   $dynamicStyles.appendTo(jQuery("body"));
